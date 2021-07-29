@@ -28,7 +28,7 @@ class TripletLoss(nn.Module):
         """
         n = inputs.size(0)
 
-        # Compute pairwise distance, replace by the official when merged
+        # Compute pairwise distance, replace by the official whe`n merged
         dist = torch.pow(inputs, 2).sum(dim=1, keepdim=True).expand(n, n)
         dist = dist + dist.t()
         dist.addmm_(inputs, inputs.t(), beta=1, alpha=-2)
