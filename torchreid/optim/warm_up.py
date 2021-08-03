@@ -18,6 +18,7 @@ class GradualWarmupScheduler(_LRScheduler):
         if self.multiplier <= 1.:
             raise ValueError('multiplier should be greater than 1.')
         self.total_epoch = total_epoch
+        print("(multiplier, total_epoch) =", (multiplier, total_epoch))
         self.after_scheduler = after_scheduler
         self.finished = False
         super().__init__(optimizer)

@@ -97,8 +97,11 @@ class ImageTripletEngine(Engine):
             imgs = imgs.cuda()
             pids = pids.cuda()
 
-        outputs, features = self.model(imgs)
-
+        output1, output2, features = self.model(imgs)
+        outputs = [output1, output2]
+        # ======
+        # print(self.model(imgs))
+        # ======
         loss = 0
         loss_summary = {}
 
