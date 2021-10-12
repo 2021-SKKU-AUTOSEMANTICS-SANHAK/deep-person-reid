@@ -1,10 +1,12 @@
 from __future__ import print_function, absolute_import
 import torch
 
+
 #from warm_up import GradualWarmupScheduler
 from .warm_up import *
+from .lars import *
 
-AVAI_SCH = ['single_step', 'multi_step', 'cosine', 'warmup']
+AVAI_SCH = ['single_step', 'multi_step', 'cosine', 'warmup', 'lars']
 
 
 def build_lr_scheduler(

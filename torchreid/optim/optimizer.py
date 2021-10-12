@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 
 from .radam import RAdam
+from .lars import *
 
-AVAI_OPTIMS = ['adam', 'amsgrad', 'sgd', 'rmsprop', 'radam']
+AVAI_OPTIMS = ['adam', 'amsgrad', 'sgd', 'rmsprop', 'radam', 'lars']
 
 
 def build_optimizer(
@@ -153,5 +154,12 @@ def build_optimizer(
             weight_decay=weight_decay,
             betas=(adam_beta1, adam_beta2)
         )
+
+    elif optim == 'lars':
+        optimizer = get_lars_optimizer(model, 
+                                lr=base_lr_mult * lr,
+                                momentum=momentum,
+                                weight_decay=weight_decay
+                                )
 
     return optimizer

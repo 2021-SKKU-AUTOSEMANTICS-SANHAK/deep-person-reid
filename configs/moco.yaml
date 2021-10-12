@@ -1,0 +1,45 @@
+model:
+  name: 'moco'
+  pretrained: True
+
+data:
+  type: 'image'
+  sources: ['market1501']
+  targets: ['market1501']
+  height: 256
+  width: 128
+  combineall: False
+  transforms: ['random_flip', 'random_erase'] # ['random_flip']
+  save_dir: 'log/moco_supconloss_market1501'
+
+loss:
+  name: 'SupConLoss'
+  softmax:
+    label_smooth: True
+  triplet:
+    weight_t: 1.
+    weight_x: 1.
+    margin: 0. # 0.-->softmargin
+
+sampler:
+  train_sampler: 'RandomIdentitySampler'
+  num_instances: 4 
+
+train:
+  optim: 'sgd'
+  lr: 0.3
+  max_epoch: 200
+  batch_size: 480 # 2560
+  lr_scheduler: 'single_step'
+  #multiplier: 10
+  #total_epoch: 19 # torchreid/optim/lr_scheduler.py - parameters of function "build_lr_scheduler"
+  stepsize: [40, 70]
+
+test:
+  batch_size: 480 
+  dist_metric: 'euclidean'
+  normalize_feature: False
+  evaluate: False
+  eval_freq: 10
+  rerank: False
+

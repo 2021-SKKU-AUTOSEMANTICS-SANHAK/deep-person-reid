@@ -392,11 +392,15 @@ class Engine(object):
             qf = F.normalize(qf, p=2, dim=1)
             gf = F.normalize(gf, p=2, dim=1)
 
+        tmp_time = time.time()
+
         print(
             'Computing distance matrix with metric={} ...'.format(dist_metric)
         )
         distmat = metrics.compute_distance_matrix(qf, gf, dist_metric)
         distmat = distmat.numpy()
+
+        print("Mean distance: ", np.mean(distmat))
 
         if rerank:
             print('Applying person re-ranking ...')
@@ -419,6 +423,8 @@ class Engine(object):
         print('CMC curve')
         for r in ranks:
             print('Rank-{:<3}: {:.1%}'.format(r, cmc[r - 1]))
+        
+        print("ranking time: ", time.time() - tmp_time)
 
         if visrank:
             visualize_ranked_results(
