@@ -33,6 +33,7 @@ class Engine(object):
         self.use_gpu = (torch.cuda.is_available() and use_gpu)
         self.writer = None
         self.epoch = 0
+        self.is_unsupervised = None
 
         self.model = None
         self.optimizer = None
@@ -165,7 +166,7 @@ class Engine(object):
             raise ValueError(
                 'visrank can be set to True only if test_only=True'
             )
-
+        
         if test_only:
             self.test(
                 dist_metric=dist_metric,
@@ -186,7 +187,6 @@ class Engine(object):
         self.start_epoch = start_epoch
         self.max_epoch = max_epoch
         print('=> Start training')
-
         for self.epoch in range(self.start_epoch, self.max_epoch):
             self.train(
                 print_freq=print_freq,
@@ -232,17 +232,18 @@ class Engine(object):
         losses = MetricMeter()
         batch_time = AverageMeter()
         data_time = AverageMeter()
-
+        
         self.set_model_mode('train')
-
+        
         self.two_stepped_transfer_learning(
             self.epoch, fixbase_epoch, open_layers
         )
-
+        
         self.num_batches = len(self.train_loader)
         end = time.time()
         for self.batch_idx, data in enumerate(self.train_loader):
             data_time.update(time.time() - end)
+            
             loss_summary = self.forward_backward(data)
             batch_time.update(time.time() - end)
             losses.update(loss_summary)

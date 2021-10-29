@@ -1,13 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+from __future__ import division, absolute_import
 import os
-
+from shutil import Error
+import warnings
 import torch
 import torch.nn as nn
 from torch.nn import init
 from torch.nn import functional as F
-import torchvision.models as models
-from torchvision.models.mnasnet import _load_pretrained
 
+import torchvision.models as models
+from torchreid import utils
+from torchreid.utils.torchtools import load_pretrained_weights
+from torchreid.models.resnet import resnet50
 # from torchvision.models import resnet50
 
 pretrained_urls = {
@@ -196,8 +200,13 @@ class MoCo(nn.Module):
 
         # dequeue and enqueue
         self._dequeue_and_enqueue(k)
-
-        return logits, labels
+        
+        if self.loss == 'softmax':
+            return logits
+        elif self.loss == 'SupConvLoss':
+            return logits, labels
+        else:
+            raise KeyError("Unsupported loss: {}".format(self.loss))
 
 
 # utils
@@ -214,21 +223,61 @@ def concat_all_gather(tensor):
     output = torch.cat(tensors_gather, dim=0)
     return output
 
-def init_pretrained_weights(base_encoder, key=''):
-    """This part should be worked"""
-    pass
-    #return encoder
 
-def mocov2(num_classes=1000, pretrained=True, loss='SupConLoss', **kwargs):
+def init_pretrained_weights(model, key=''):
+    """Initializes model with pretrained weights.
+    
+    Layers that don't match with pretrained layers in name or size are kept unchanged.
+    """
+    import os
+    import errno
+    import gdown
+
+    def _get_torch_home():
+        ENV_TORCH_HOME = 'TORCH_HOME'
+        ENV_XDG_CACHE_HOME = 'XDG_CACHE_HOME'
+        DEFAULT_CACHE_DIR = '~/.cache'
+        torch_home = os.path.expanduser(
+            os.getenv(
+                ENV_TORCH_HOME,
+                os.path.join(
+                    os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch'
+                )
+            )
+        )
+        return torch_home
+
+    torch_home = _get_torch_home()
+    model_dir = os.path.join(torch_home, 'checkpoints')
+    try:
+        os.makedirs(model_dir)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            # Directory already exists, ignore.
+            pass
+        else:
+            # Unexpected OSError, re-raise.
+            raise
+    filename = key + '.pth'
+    cached_file = os.path.join(model_dir, filename)
+
+    if not os.path.exists(cached_file):
+        gdown.download(pretrained_urls[key], cached_file, quiet=False)
+    
+    try:
+        load_pretrained_weights(model, cached_file)
+    except AttributeError as e:
+        print(e)
+
+def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
     base_encoder = models.__dict__['resnet50']
-    print(base_encoder)
-    #if pretrained:
-    #    init_pretrained_weights(base_encoder, key='mocov2')
+    if pretrained:
+        init_pretrained_weights(model=base_encoder, key='lup_moco_r50')
     
     model = MoCo(
         base_encoder=base_encoder,
         num_classes=num_classes,
-        dim=128,
+        dim=256,
         loss=loss,
         K=65536,
         m=0.999, 

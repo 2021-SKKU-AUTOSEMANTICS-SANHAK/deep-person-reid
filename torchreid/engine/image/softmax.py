@@ -77,12 +77,17 @@ class ImageSoftmaxEngine(Engine):
 
     def forward_backward(self, data):
         imgs, pids = self.parse_data_for_train(data)
-
+    
         if self.use_gpu:
             imgs = imgs.cuda()
             pids = pids.cuda()
 
-        outputs = self.model(imgs)
+        if self.is_unsupervised:
+            img = imgs[0]
+            #outputs = self.model(imgs[0][0], imgs[0][1])
+            outputs, target = self.model(img)
+        else:
+            outputs = self.model(imgs)
         loss = self.compute_loss(self.criterion, outputs, pids)
 
         self.optimizer.zero_grad()

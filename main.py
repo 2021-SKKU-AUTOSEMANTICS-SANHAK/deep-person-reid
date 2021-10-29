@@ -75,7 +75,8 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
                 use_gpu=cfg.use_gpu,
                 label_smooth=cfg.loss.softmax.label_smooth
             )
-
+    engine.is_unsupervised = True if cfg.model.name == 'moco' else False
+    print(engine.is_unsupervised)
     return engine
 
 
@@ -160,11 +161,12 @@ def main():
         pretrained=cfg.model.pretrained,
         use_gpu=cfg.use_gpu
     )
+
     num_params, flops = compute_model_complexity(
         model, (1, 3, cfg.data.height, cfg.data.width)
     )
     print('Model complexity: params={:,} flops={:,}'.format(num_params, flops))
-    # print('Model structure:', model)
+
     if cfg.model.load_weights and check_isfile(cfg.model.load_weights):
         load_pretrained_weights(model, cfg.model.load_weights)
 

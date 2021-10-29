@@ -13,7 +13,7 @@ data:
   save_dir: 'log/moco_supconloss_market1501'
 
 loss:
-  name: 'SupConLoss'
+  name: 'softmax' #'SupConLoss'
   softmax:
     label_smooth: True
   triplet:
