@@ -28,15 +28,15 @@ sampler:
 train:
   optim: 'sgd'
   lr: 0.3
-  max_epoch: 200
-  batch_size: 480 # 2560
+  max_epoch: 1000
+  batch_size: 240 # 2560
   lr_scheduler: 'single_step'
   #multiplier: 10
   #total_epoch: 19 # torchreid/optim/lr_scheduler.py - parameters of function "build_lr_scheduler"
-  stepsize: [40, 70]
+  stepsize: [10, 20]
 
 test:
-  batch_size: 480 
+  batch_size: 200 
   dist_metric: 'euclidean'
   normalize_feature: False
   evaluate: False

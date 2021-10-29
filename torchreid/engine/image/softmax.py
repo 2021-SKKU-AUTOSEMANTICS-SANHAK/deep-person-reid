@@ -83,9 +83,7 @@ class ImageSoftmaxEngine(Engine):
             pids = pids.cuda()
 
         if self.is_unsupervised:
-            img = imgs[0]
-            #outputs = self.model(imgs[0][0], imgs[0][1])
-            outputs, target = self.model(img)
+            outputs = self.model(imgs, imgs)
         else:
             outputs = self.model(imgs)
         loss = self.compute_loss(self.criterion, outputs, pids)

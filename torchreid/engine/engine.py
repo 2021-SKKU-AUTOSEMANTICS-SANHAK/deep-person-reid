@@ -367,7 +367,10 @@ class Engine(object):
                 if self.use_gpu:
                     imgs = imgs.cuda()
                 end = time.time()
-                features = self.extract_features(imgs)
+                if self.is_unsupervised:
+                    features = self.extract_features(imgs)
+                else:
+                    features = self.extract_features(imgs)
                 batch_time.update(time.time() - end)
                 features = features.cpu().clone()
                 f_.append(features)

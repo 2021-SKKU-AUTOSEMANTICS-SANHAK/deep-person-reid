@@ -7,12 +7,14 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 from torch.nn import functional as F
+import torch.distributed as dist
 
 import torchvision.models as models
 from torchreid import utils
 from torchreid.utils.torchtools import load_pretrained_weights
-from torchreid.models.resnet import resnet50
 # from torchvision.models import resnet50
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 
 pretrained_urls = {
     'mocov2': 'https://drive.google.com/u/0/uc?id=1pFyAdt9BOZCtzaLiE-W3CsX_kgWABKK6&export=download'
@@ -31,6 +33,7 @@ class MoCo(nn.Module):
         T: softmax temperature (default: 0.07)
         """
         super(MoCo, self).__init__()
+
         self.num_cls=num_classes
         self.loss = loss
         
@@ -269,10 +272,20 @@ def init_pretrained_weights(model, key=''):
     except AttributeError as e:
         print(e)
 
+def setup():
+    #world_size = int(os.environ["WORLD_SIZE"])
+    #ngpus_per_node = torch.cuda.device_count()
+    #world_size = ngpus_per_node * world_size
+    #rank = int(os.environ["RANK"])
+
+    dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
+
 def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
     base_encoder = models.__dict__['resnet50']
     if pretrained:
         init_pretrained_weights(model=base_encoder, key='lup_moco_r50')
+
+    setup()
     
     model = MoCo(
         base_encoder=base_encoder,
