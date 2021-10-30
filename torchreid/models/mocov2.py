@@ -10,7 +10,9 @@ from torch.nn import functional as F
 import torch.distributed as dist
 
 import torchvision.models as models
-from torchreid import utils
+
+from torchreid.models import moco_encoders
+
 from torchreid.utils.torchtools import load_pretrained_weights
 # from torchvision.models import resnet50
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -270,27 +272,33 @@ def init_pretrained_weights(model, key=''):
     try:
         load_pretrained_weights(model, cached_file)
     except AttributeError as e:
-        print(e)
+        #print(e)
+        pass
+    return cached_file
 
 def setup():
-    #world_size = int(os.environ["WORLD_SIZE"])
-    #ngpus_per_node = torch.cuda.device_count()
-    #world_size = ngpus_per_node * world_size
-    #rank = int(os.environ["RANK"])
-
     dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
 
 def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
-    base_encoder = models.__dict__['resnet50']
+    dim=256
+    backbone = models.__dict__['resnet50']
     if pretrained:
-        init_pretrained_weights(model=base_encoder, key='lup_moco_r50')
+        path = init_pretrained_weights(model=backbone, key='lup_moco_r50')
+    # use resnet50 as encoder of moco
+    base_encoder = backbone
+
+    # use LUPNet as encoder of moco
+    #base_encoder = moco_encoders.LUPNet(backbone=backbone, embed_dim=dim, cls_num=num_classes, per_model=path)
+
+    # use BaseEncoder as encoder of moco
+    #base_encoder = moco_encoders.BaseEncoder(backbone=backbone, embed_dim=dim, cls_num=num_classes, cls_dim=None, per_model=path)
 
     setup()
     
     model = MoCo(
         base_encoder=base_encoder,
         num_classes=num_classes,
-        dim=256,
+        dim=dim,
         loss=loss,
         K=65536,
         m=0.999, 

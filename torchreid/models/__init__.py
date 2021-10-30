@@ -77,6 +77,7 @@ __model_factory = {
     'osnet_ain_x1_0': osnet_ain_x1_0,
     'plr_osnet': plr_osnet,
     'efficientnet': efficientnet,
+    # unsupervised models
     'moco': mocov2,
     }
 

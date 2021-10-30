@@ -9,7 +9,7 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase'] # ['random_flip']
+  transforms: ['random_flip', 'random_erase', 'gaussian_blur'] # ['random_flip']
   save_dir: 'log/moco_supconloss_market1501'
 
 loss:
@@ -30,10 +30,8 @@ train:
   lr: 0.3
   max_epoch: 1000
   batch_size: 240 # 2560
-  lr_scheduler: 'single_step'
-  #multiplier: 10
-  #total_epoch: 19 # torchreid/optim/lr_scheduler.py - parameters of function "build_lr_scheduler"
-  stepsize: [10, 20]
+  lr_scheduler: 'single_step' 
+  stepsize: [40, 70]
 
 test:
   batch_size: 200 

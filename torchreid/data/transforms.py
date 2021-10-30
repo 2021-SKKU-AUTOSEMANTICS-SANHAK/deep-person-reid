@@ -3,11 +3,28 @@ import math
 import random
 from collections import deque
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 from torchvision.transforms import (
-    Resize, Compose, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip
+    Resize, Compose, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomApply
 )
 
+
+class GaussianBlur(object):
+    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709"""
+
+    def __init__(self, sigma=[.1, 2.]):
+        self.sigma = sigma
+
+    def __call__(self, x):
+        sigma = random.uniform(self.sigma[0], self.sigma[1])
+        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+        return x
+
+    def __repr__(self):
+        format_string = self.__class__.__name__ + '('
+        format_string += 'sigma={0})'.format(self.sigma)
+        return format_string
+        
 
 class Random2DTranslation(object):
     """Randomly translates the input image with a probability.
@@ -105,6 +122,56 @@ class RandomErasing(object):
 
         return img
 
+class RectScale(object):
+    def __init__(self, height, width, interpolation=Image.BILINEAR):
+        self.height = height
+        self.width = width
+        self.interpolation = interpolation
+
+    def __call__(self, img):
+        w, h = img.size
+        if h == self.height and w == self.width:
+            return img
+        return img.resize((self.width, self.height), self.interpolation)
+
+class RandomSizedRectCrop(object):
+    def __init__(self, height, width, al=0.64, ah=1.0, 
+        rl=2.0, rh=3.0, interpolation=Image.BILINEAR):
+        self.height = height
+        self.width = width
+        self.al, self.ah = al, ah
+        self.rl, self.rh = rl, rh
+        self.interpolation = interpolation
+
+    def __call__(self, img):
+        for attempt in range(10):
+            area = img.size[0] * img.size[1]
+            target_area = random.uniform(self.al, self.ah) * area
+            aspect_ratio = random.uniform(self.rl, self.rh)
+
+            h = int(round(math.sqrt(target_area * aspect_ratio)))
+            w = int(round(math.sqrt(target_area / aspect_ratio)))
+
+            if w <= img.size[0] and h <= img.size[1]:
+                x1 = random.randint(0, img.size[0] - w)
+                y1 = random.randint(0, img.size[1] - h)
+
+                img = img.crop((x1, y1, x1 + w, y1 + h))
+                assert(img.size == (w, h))
+
+                return img.resize((self.width, self.height), self.interpolation)
+
+        # Fallback
+        scale = RectScale(self.height, self.width,
+                          interpolation=self.interpolation)
+        return scale(img)
+
+    def __repr__(self):
+        format_string = self.__class__.__name__ + '('
+        format_string += 'size=[{:d}, {:d}], '.format(self.height, self.width)
+        format_string += 'area_ratio=[{:.3f}, {:.3f}], '.format(self.al, self.ah)
+        format_string += 'aspect_ratio=[{:.3f}, {:.3f}]'.format(self.rl, self.rh)
+        return format_string
 
 class ColorAugmentation(object):
     """Randomly alters the intensities of RGB channels.
@@ -229,6 +296,21 @@ class RandomPatch(object):
 
         return img
 
+class TwoCropsTransform:
+    """Take two random crops of one image as the query and key."""
+
+    def __init__(self, base_transform):
+        self.base_transform = base_transform
+
+    def __call__(self, x):
+        q = self.base_transform(x)
+        k = self.base_transform(x)
+        return [q, k]
+
+    def __repr__(self):
+        format_string  = self.__class__.__name__ + 'with base transform: \n'
+        format_string += str(self.base_transform)
+        return format_string
 
 def build_transforms(
     height,
@@ -275,6 +357,10 @@ def build_transforms(
 
     print('+ resize to {}x{}'.format(height, width))
     transform_tr += [Resize((height, width))]
+
+    if 'gaussian_blur' in transforms:
+        print('+ gaussian blur')
+        transform_tr += [RandomApply([GaussianBlur([.1, 2.])], p=0.5)]
 
     if 'random_flip' in transforms:
         print('+ random flip')
