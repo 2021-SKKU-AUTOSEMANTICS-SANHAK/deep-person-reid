@@ -10,7 +10,6 @@ from torch.nn import functional as F
 import torch.distributed as dist
 
 import torchvision.models as models
-
 from torchreid.models import moco_encoders
 
 from torchreid.utils.torchtools import load_pretrained_weights
@@ -47,7 +46,7 @@ class MoCo(nn.Module):
         # num_classes is the output fc dimension
         self.encoder_q = base_encoder(num_classes=dim)
         self.encoder_k = base_encoder(num_classes=dim)
-
+       
         if mlp:  # hack: brute-force replacement
             dim_mlp = self.encoder_q.fc.weight.shape[1]
             self.encoder_q.fc = nn.Sequential(nn.Linear(dim_mlp, dim_mlp), 
@@ -270,35 +269,30 @@ def init_pretrained_weights(model, key=''):
         gdown.download(pretrained_urls[key], cached_file, quiet=False)
     
     try:
-        load_pretrained_weights(model, cached_file)
+        print(f'Loading pre-model from {cached_file}')
+        state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
+        if 'state_dict' in state_dict:
+            state_dict = state_dict['state_dict']
+        msg = model.load_state_dict(state_dict, strict=False)
+        print(f'Load pre-model with MSG: {msg}')
+        print(f'Loading pre-model from {cached_file} successively')
     except AttributeError as e:
-        #print(e)
-        pass
-    return cached_file
+        print(e)
 
-def setup():
+def DDPsetup():
     dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
 
 def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
-    dim=256
     backbone = models.__dict__['resnet50']
-    if pretrained:
-        path = init_pretrained_weights(model=backbone, key='lup_moco_r50')
+
     # use resnet50 as encoder of moco
     base_encoder = backbone
-
-    # use LUPNet as encoder of moco
-    #base_encoder = moco_encoders.LUPNet(backbone=backbone, embed_dim=dim, cls_num=num_classes, per_model=path)
-
-    # use BaseEncoder as encoder of moco
-    #base_encoder = moco_encoders.BaseEncoder(backbone=backbone, embed_dim=dim, cls_num=num_classes, cls_dim=None, per_model=path)
-
-    setup()
+    DDPsetup()
     
     model = MoCo(
         base_encoder=base_encoder,
         num_classes=num_classes,
-        dim=dim,
+        dim=256,
         loss=loss,
         K=65536,
         m=0.999, 
@@ -306,5 +300,6 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
         mlp=1,
         **kwargs
         )
-
+    if pretrained:
+        init_pretrained_weights(model=model, key='lup_moco_r50')
     return model

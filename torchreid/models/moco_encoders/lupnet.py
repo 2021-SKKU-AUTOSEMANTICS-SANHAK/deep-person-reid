@@ -10,14 +10,14 @@ from torch.nn import init
 from torch.nn import functional as F
 
 class LUPNet(nn.Module):
-    def __init__(self, backbone, embed_dim=128, cls_num=1000, per_model=None):
+    def __init__(self, backbone, embed_dim=128, cls_num=1000, pre_model=None):
         super(LUPNet, self).__init__()
         self.embed_dim = embed_dim
         self.cls_num   = cls_num
-        self.per_model = per_model
+        self.pre_model = pre_model
         self.has_embed = self.embed_dim > 0
         base = backbone()
-        if self.per_model is not None and os.path.isfile(self.per_model):
+        if self.pre_model is not None and os.path.isfile(self.pre_model):
             print(f'Loading pre-model from {self.pre_model}')
             state_dict = torch.load(self.pre_model, map_location=torch.device('cpu'))
             if 'state_dict' in state_dict:
