@@ -6,7 +6,7 @@ import torch
 from .warm_up import *
 from .lars import *
 
-AVAI_SCH = ['single_step', 'multi_step', 'cosine', 'warmup', 'lars']
+AVAI_SCH = ['single_step', 'multi_step', 'cosine', 'warmup']
 
 
 def build_lr_scheduler(

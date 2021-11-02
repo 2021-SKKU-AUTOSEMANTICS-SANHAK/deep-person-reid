@@ -14,8 +14,9 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from torch.nn.parameter import Parameter
+from torch.optim.optimizer import Optimizer
 
-class LARS(object):
+class LARS(Optimizer):
     """
     Slight modification of LARC optimizer from
     https://github.com/NVIDIA/apex/blob/master/apex/parallel/LARC.py

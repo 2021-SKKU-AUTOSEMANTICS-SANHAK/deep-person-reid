@@ -18,7 +18,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 pretrained_urls = {
-    'mocov2': 'https://drive.google.com/u/0/uc?id=1pFyAdt9BOZCtzaLiE-W3CsX_kgWABKK6&export=download'
+    'lup_moco_r50': 'https://drive.google.com/u/0/uc?id=1pFyAdt9BOZCtzaLiE-W3CsX_kgWABKK6&export=download',
+    'moco_v2_imagenet': 'https://drive.google.com/u/0/uc?id=1V4QRLNkcD22X3x_L_0JWzqJ4uWOnCeox&export=download'
 }
 
 class MoCo(nn.Module):
@@ -233,7 +234,6 @@ def init_pretrained_weights(model, key=''):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
-    import os
     import errno
     import gdown
 
@@ -262,7 +262,10 @@ def init_pretrained_weights(model, key=''):
         else:
             # Unexpected OSError, re-raise.
             raise
-    filename = key + '.pth'
+    if key == 'lup_moco_r50':
+        filename = key + '.pth'
+    elif key == 'moco_v2_imagenet':
+        filename = key + '.pth.tar'
     cached_file = os.path.join(model_dir, filename)
 
     if not os.path.exists(cached_file):
@@ -270,14 +273,21 @@ def init_pretrained_weights(model, key=''):
     
     try:
         print(f'Loading pre-model from {cached_file}')
-        state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
+        try:
+            state_dict = torch.load(cached_file, map_location=torch.device('cuda'))
+        except Error as e:
+            print(e)
+            state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
+            
         if 'state_dict' in state_dict:
             state_dict = state_dict['state_dict']
+            print(f'Loading pre-model from {cached_file} successively')
         msg = model.load_state_dict(state_dict, strict=False)
         print(f'Load pre-model with MSG: {msg}')
-        print(f'Loading pre-model from {cached_file} successively')
+        
     except AttributeError as e:
         print(e)
+
 
 def DDPsetup():
     dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
@@ -292,7 +302,7 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
     model = MoCo(
         base_encoder=base_encoder,
         num_classes=num_classes,
-        dim=256,
+        dim=128,
         loss=loss,
         K=65536,
         m=0.999, 
@@ -301,5 +311,6 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
         **kwargs
         )
     if pretrained:
-        init_pretrained_weights(model=model, key='lup_moco_r50')
+        #init_pretrained_weights(model=model, key='lup_moco_r50')
+        init_pretrained_weights(model=model, key='moco_v2_imagenet')
     return model

@@ -9,35 +9,30 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase', 'gaussian_blur'] # ['random_flip']
-  save_dir: 'log/moco_supconloss_market1501'
+  transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop'] # ['random_flip']
+  save_dir: 'log/moco_softmax_market1501'
 
 loss:
   name: 'softmax' #'SupConLoss'
   softmax:
     label_smooth: True
-  triplet:
-    weight_t: 1.
-    weight_x: 1.
-    margin: 0. # 0.-->softmargin
 
-sampler:
-  train_sampler: 'RandomIdentitySampler'
-  num_instances: 4 
+#sampler:
+#  train_sampler: 'RandomIdentitySampler'
+#  num_instances: 4 
 
 train:
-  optim: 'sgd'
-  lr: 0.3
+  optim: 'amsgrad' #'sgd'
+  lr: 30.
   max_epoch: 1000
   batch_size: 240 # 2560
-  lr_scheduler: 'single_step' 
-  stepsize: [40, 70]
+  lr_scheduler: 'multi_step' 
+  stepsize: [30, 100]
 
 test:
-  batch_size: 200 
+  batch_size: 240 
   dist_metric: 'euclidean'
   normalize_feature: False
   evaluate: False
   eval_freq: 10
-  rerank: False
-
+  rerank: True

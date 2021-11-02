@@ -385,6 +385,11 @@ def build_transforms(
         transform_tr += [
             ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0)
         ]
+    if 'random_sized_crop' in transforms:
+        print(' + random sized crop')
+        transform_tr += [
+            RandomSizedRectCrop(height, width, interpolation=3)
+        ]
 
     print('+ to torch tensor of range [0, 1]')
     transform_tr += [ToTensor()]
