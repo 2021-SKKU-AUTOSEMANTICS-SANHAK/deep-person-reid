@@ -3,11 +3,14 @@ import copy
 import numpy as np
 import random
 from collections import defaultdict
+import torch
+import torch.distributed as dist
+import torch.utils.data.distributed
 from torch.utils.data.sampler import Sampler, RandomSampler, SequentialSampler
 
 AVAI_SAMPLERS = [
     'RandomIdentitySampler', 'SequentialSampler', 'RandomSampler',
-    'RandomDomainSampler', 'RandomDatasetSampler', 'IterDistributedSampler',
+    'RandomDomainSampler', 'RandomDatasetSampler', 'DistributedSampler',
     'InferenceSampler'
 ]
 
@@ -143,7 +146,6 @@ class RandomDomainSampler(Sampler):
     def __len__(self):
         return self.length
 
-
 class RandomDatasetSampler(Sampler):
     """Random dataset sampler.
 
@@ -202,60 +204,6 @@ class RandomDatasetSampler(Sampler):
     def __len__(self):
         return self.length
 
-class IterDistributedSampler(Sampler):
-    def __init__(self, dataset, total_epochs, batch_size=64, num_replicas=None, rank=None, shuffle=True):
-        if num_replicas is None:
-            if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
-            num_replicas = dist.get_world_size()
-        if rank is None:
-            if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
-            rank = dist.get_rank()
-        assert total_epochs >= 1
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.num_replicas = num_replicas
-        self.rank = rank
-        self.epoch = 0
-        self.shuffle = shuffle
-
-        self.effect_bs = self.num_replicas * self.batch_size
-        self.total_size = len(dataset) // self.effect_bs * self.effect_bs
-
-        self.num_samples = self.total_size // self.num_replicas
-
-        self.indices = []
-        for ep in range(total_epochs):
-            # deterministically shuffle based on epoch
-            g = torch.Generator()
-            g.manual_seed(ep)
-            if self.shuffle:
-                indices = torch.randperm(len(self.dataset), generator=g).tolist()
-                indices = indices[:self.total_size]
-            else:
-                indices = list(range(len(self.dataset)))
-            indices = indices[:self.total_size]
-
-             # subsample
-            self.indices.extend(indices[self.rank:self.total_size:self.num_replicas])
-
-        self.num_samples = self.num_samples * total_epochs
-
-        # print(f'ebs={self.effect_bs}, nr={self.num_replicas}, bs={self.batch_size}' 
-        #      +f' ts={self.total_size}, ns={self.num_samples}, tep={total_epochs}')
-        assert len(self.indices) == self.num_samples
-
-
-    def __iter__(self):
-        return iter(self.indices)
-
-    def __len__(self):
-        return self.num_samples
-
-    def set_epoch(self, epoch):
-        self.epoch = epoch
-
 class InferenceSampler(Sampler):
     """ Sampler used for inference in DDP. 
         This sampler produces different number of samples for different workers.
@@ -286,6 +234,9 @@ class InferenceSampler(Sampler):
     def __len__(self):
         return len(self.indices)
 
+def DDPsetup():
+    dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
+
 def build_train_sampler(
     data_source,
     train_sampler,
@@ -313,7 +264,7 @@ def build_train_sampler(
 
     if train_sampler == 'RandomIdentitySampler':
         sampler = RandomIdentitySampler(data_source, batch_size, num_instances)
-    # __init__(self, data_source, batch_size, num_instances)
+    
     elif train_sampler == 'RandomDomainSampler':
         sampler = RandomDomainSampler(data_source, batch_size, num_cams)
 
@@ -326,10 +277,12 @@ def build_train_sampler(
     elif train_sampler == 'RandomSampler':
         sampler = RandomSampler(data_source)
         
-    elif train_sampler == 'IterDistributedSampler':
-        sampler = IterDistributedSampler()
-    #__init__(self, dataset, total_epochs, batch_size=64, num_replicas=None, rank=None, shuffle=True)
+    elif train_sampler == 'DistributedSampler':
+        DDPsetup()
+        sampler = torch.utils.data.distributed.DistributedSampler(dataset=data_source)
+    
     elif train_sampler == 'InferenceSampler':
-        sampler = InferenceSampler()
+        DDPsetup()
+        sampler = InferenceSampler(dataset=data_source)
     #(self, data_num: int, num_replicas: int = None, rank: int = None)
     return sampler

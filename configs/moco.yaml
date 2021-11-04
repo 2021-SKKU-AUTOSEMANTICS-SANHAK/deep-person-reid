@@ -9,28 +9,27 @@ data:
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop'] # ['random_flip']
+  transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop']
   save_dir: 'log/moco_softmax_market1501'
 
 loss:
-  name: 'softmax' #'SupConLoss'
+  name: 'softmax'
   softmax:
     label_smooth: True
 
-#sampler:
-#  train_sampler: 'RandomIdentitySampler'
-#  num_instances: 4 
+sampler:
+  train_sampler: 'DistributedSampler'
 
 train:
-  optim: 'amsgrad' #'sgd'
-  lr: 30.
+  optim: 'amsgrad'
+  lr: .3
   max_epoch: 1000
-  batch_size: 240 # 2560
+  batch_size: 128
   lr_scheduler: 'multi_step' 
   stepsize: [30, 100]
 
 test:
-  batch_size: 240 
+  batch_size: 128 
   dist_metric: 'euclidean'
   normalize_feature: False
   evaluate: False

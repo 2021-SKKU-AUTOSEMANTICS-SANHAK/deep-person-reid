@@ -75,8 +75,9 @@ def build_engine(cfg, datamanager, model, optimizer, scheduler):
                 use_gpu=cfg.use_gpu,
                 label_smooth=cfg.loss.softmax.label_smooth
             )
+    
     engine.is_unsupervised = True if cfg.model.name == 'moco' else False
-    print(engine.is_unsupervised)
+
     return engine
 
 

@@ -12,7 +12,7 @@ import torch.distributed as dist
 import torchvision.models as models
 from torchreid.models import moco_encoders
 
-from torchreid.utils.torchtools import load_pretrained_weights
+import torch.utils.model_zoo as model_zoo
 # from torchvision.models import resnet50
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -279,25 +279,46 @@ def init_pretrained_weights(model, key=''):
             print(e)
             state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
             
+        
         if 'state_dict' in state_dict:
-            state_dict = state_dict['state_dict']
+            state_dict = state_dict['state_dict']    
             print(f'Loading pre-model from {cached_file} successively')
         msg = model.load_state_dict(state_dict, strict=False)
         print(f'Load pre-model with MSG: {msg}')
         
+    except KeyError as e:
+        print(e)
     except AttributeError as e:
         print(e)
 
+def init_pretrained_weights_backbond(backbone, model_url):
+    """Initializes model with pretrained weights.
+    
+    Layers that don't match with pretrained layers in name or size are kept unchanged.
+    """
+    pretrain_dict = model_zoo.load_url(model_url)
+    model_dict = backbone.state_dict()
+    pretrain_dict = {
+        k: v
+        for k, v in pretrain_dict.items()
+        if k in model_dict and model_dict[k].size() == v.size()
+    }
+    model_dict.update(pretrain_dict)
+    backbone.load_state_dict(model_dict)
 
 def DDPsetup():
     dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
 
 def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
+    """
+    It is moco v2 model for Unsupervised Person Reidentification
+    To use this model, train data loader must be DistributedSampler    
+    """
     backbone = models.__dict__['resnet50']
-
+    # init_pretrained_weights_backbond(backbone=backbone, model_url=pretrained_urls['lup_moco_r50'])
     # use resnet50 as encoder of moco
     base_encoder = backbone
-    DDPsetup()
+    #DDPsetup()
     
     model = MoCo(
         base_encoder=base_encoder,
@@ -310,7 +331,9 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
         mlp=1,
         **kwargs
         )
+        
     if pretrained:
         #init_pretrained_weights(model=model, key='lup_moco_r50')
         init_pretrained_weights(model=model, key='moco_v2_imagenet')
+    
     return model
