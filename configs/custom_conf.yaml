@@ -4,13 +4,13 @@ model:
 
 data:
   type: 'image'
-  sources: ['market1501']
-  targets: ['market1501']
+  sources: ['skku']
+  targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip']
-  save_dir: 'log/osnet_x1_0_market1501-Test'
+  transforms: ['random_flip', 'random_erase', 'random_sized_crop']
+  save_dir: 'log/osnet_x1_0_skku_softmax'
 
 loss:
   name: 'softmax'
@@ -21,7 +21,7 @@ train:
   optim: 'amsgrad'
   lr: 0.0015
   max_epoch: 150
-  batch_size: 64
+  batch_size: 128
   fixbase_epoch: 10
   open_layers: ['classifier']
   lr_scheduler: 'single_step'
@@ -33,4 +33,4 @@ test:
   normalize_feature: False
   evaluate: False
   eval_freq: 10
-  rerank: False
+  rerank: True

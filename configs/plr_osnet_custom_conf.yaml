@@ -4,13 +4,13 @@ model:
 
 data:
   type: 'image'
-  sources: ['market1501', 'cuhk03', 'cuhksysu']
-  targets: ['market1501', 'cuhk03', 'sensereid']
+  sources: ['skku']
+  targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase'] # ['random_flip']
-  save_dir: 'log/plr_osnet_triplet_market1501_cuhk03_cuhksysu-market1501_cuhk03_sensereid'
+  transforms: ['random_flip', 'random_erase', 'random_sized_crop'] # ['random_flip']
+  save_dir: 'log/plr_osnet_triplet_skku'
 
 loss:
   name: 'triplet'
@@ -29,7 +29,7 @@ train:
   optim: 'adam'
   lr: 0.000035
   max_epoch: 200
-  batch_size: 64
+  batch_size: 192
   lr_scheduler: 'warmup'
   #multiplier: 10
   #total_epoch: 19 # torchreid/optim/lr_scheduler.py - parameters of function "build_lr_scheduler"
@@ -41,5 +41,5 @@ test:
   normalize_feature: False
   evaluate: False
   eval_freq: 10
-  rerank: False
+  rerank: True
 

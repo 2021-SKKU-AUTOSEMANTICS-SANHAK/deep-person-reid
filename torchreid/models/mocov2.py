@@ -18,7 +18,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 pretrained_urls = {
-    'lup_moco_r50': 'https://drive.google.com/u/0/uc?id=1pFyAdt9BOZCtzaLiE-W3CsX_kgWABKK6&export=download',
+    #'lup_moco_r50': 'https://drive.google.com/u/0/uc?id=1pFyAdt9BOZCtzaLiE-W3CsX_kgWABKK6&export=download',
+    'lup_moco_r50_change3': 'https://drive.google.com/file/u/0/uc?id=1DcOQzjxsiYc5PGFZLvObi6f0dcyqt3lJ&export=download',
     'moco_v2_imagenet': 'https://drive.google.com/u/0/uc?id=1V4QRLNkcD22X3x_L_0JWzqJ4uWOnCeox&export=download'
 }
 
@@ -208,7 +209,7 @@ class MoCo(nn.Module):
         
         if self.loss == 'softmax':
             return logits
-        elif self.loss == 'SupConvLoss':
+        elif self.loss == 'supconv':
             return logits, labels
         else:
             raise KeyError("Unsupported loss: {}".format(self.loss))
@@ -262,49 +263,29 @@ def init_pretrained_weights(model, key=''):
         else:
             # Unexpected OSError, re-raise.
             raise
-    if key == 'lup_moco_r50':
-        filename = key + '.pth'
-    elif key == 'moco_v2_imagenet':
+    if key == 'moco_v2_imagenet':
         filename = key + '.pth.tar'
+    else:
+        filename = key + '.pth'
     cached_file = os.path.join(model_dir, filename)
 
     if not os.path.exists(cached_file):
         gdown.download(pretrained_urls[key], cached_file, quiet=False)
-    
+
     try:
         print(f'Loading pre-model from {cached_file}')
         try:
-            state_dict = torch.load(cached_file, map_location=torch.device('cuda'))
+            pre_model = torch.load(cached_file, map_location=torch.device('cuda'))
         except Error as e:
             print(e)
-            state_dict = torch.load(cached_file, map_location=torch.device('cpu'))
-            
+            pre_model = torch.load(cached_file, map_location=torch.device('cpu'))
+
+        msg = model.load_state_dict(pre_model['state_dict'])
         
-        if 'state_dict' in state_dict:
-            state_dict = state_dict['state_dict']    
-            print(f'Loading pre-model from {cached_file} successively')
-        msg = model.load_state_dict(state_dict, strict=False)
         print(f'Load pre-model with MSG: {msg}')
         
-    except KeyError as e:
-        print(e)
     except AttributeError as e:
         print(e)
-
-def init_pretrained_weights_backbond(backbone, model_url):
-    """Initializes model with pretrained weights.
-    
-    Layers that don't match with pretrained layers in name or size are kept unchanged.
-    """
-    pretrain_dict = model_zoo.load_url(model_url)
-    model_dict = backbone.state_dict()
-    pretrain_dict = {
-        k: v
-        for k, v in pretrain_dict.items()
-        if k in model_dict and model_dict[k].size() == v.size()
-    }
-    model_dict.update(pretrain_dict)
-    backbone.load_state_dict(model_dict)
 
 def DDPsetup():
     dist.init_process_group(backend='nccl', init_method='tcp://localhost:13701', world_size=1, rank=0)
@@ -315,9 +296,10 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
     To use this model, train data loader must be DistributedSampler    
     """
     backbone = models.__dict__['resnet50']
-    # init_pretrained_weights_backbond(backbone=backbone, model_url=pretrained_urls['lup_moco_r50'])
+    
     # use resnet50 as encoder of moco
     base_encoder = backbone
+
     #DDPsetup()
     
     model = MoCo(
@@ -333,7 +315,6 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
         )
         
     if pretrained:
-        #init_pretrained_weights(model=model, key='lup_moco_r50')
-        init_pretrained_weights(model=model, key='moco_v2_imagenet')
+        init_pretrained_weights(model=model, key='lup_moco_r50_change3')
     
     return model

@@ -4,13 +4,13 @@ model:
 
 data:
   type: 'image'
-  sources: ['market1501']
-  targets: ['market1501']
+  sources: ['skku']
+  targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
   height: 256
   width: 128
   combineall: False
   transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop']
-  save_dir: 'log/moco_softmax_market1501'
+  save_dir: 'log/moco_softmax_skku'
 
 loss:
   name: 'softmax'
@@ -21,15 +21,15 @@ sampler:
   train_sampler: 'DistributedSampler'
 
 train:
-  optim: 'amsgrad'
+  optim: 'lars'
   lr: .3
   max_epoch: 1000
   batch_size: 128
-  lr_scheduler: 'multi_step' 
-  stepsize: [30, 100]
+  lr_scheduler: 'cosine' 
+  #stepsize: [30, 100]
 
 test:
-  batch_size: 128 
+  batch_size: 300
   dist_metric: 'euclidean'
   normalize_feature: False
   evaluate: False
