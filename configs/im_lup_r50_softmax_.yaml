@@ -1,32 +1,31 @@
 model:
-  name: 'moco'
+  name: 'resnet50'
   pretrained: True
 
 data:
   type: 'image'
-  sources: ['skku']
+  sources: ['market1501']
   targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
   height: 256
   width: 128
   combineall: False
   transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop']
-  save_dir: 'log/moco_softmax_skku'
+  save_dir: 'log/lup_r50_softmax_market1501'
 
 loss:
   name: 'softmax'
   softmax:
     label_smooth: True
 
-sampler:
-  train_sampler: 'DistributedSampler'
-
 train:
-  optim: 'lars'
-  lr: .3
-  max_epoch: 1000
+  optim: 'adam'
+  lr: 0.00035
+  max_epoch: 200
   batch_size: 128
-  lr_scheduler: 'cosine' 
-  #stepsize: [30, 100]
+  fixbase_epoch: 5
+  open_layers: ['classifier']
+  lr_scheduler: 'warmup'
+  stepsize: [40, 90]
 
 test:
   batch_size: 300

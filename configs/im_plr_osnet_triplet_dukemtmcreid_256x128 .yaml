@@ -42,5 +42,4 @@ test:
   evaluate: False
   eval_freq: 10
   rerank: False
-  visactmap: False
 

@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 import torch
 
-
 #from warm_up import GradualWarmupScheduler
 from .warm_up import *
 from .lars import *
@@ -10,8 +9,8 @@ AVAI_SCH = ['single_step', 'multi_step', 'cosine', 'warmup']
 
 
 def build_lr_scheduler(
-    optimizer, lr_scheduler='single_step', stepsize=1, gamma=0.1, max_epoch=1, multiplier=10, total_epoch=19
-): # optimizer, lr_scheduler='single_step', stepsize=1, gamma=0.1, max_epoch=1, multiplier=10, total_epoch=9
+    optimizer, lr_scheduler='single_step', stepsize=1, gamma=0.1, max_epoch=1, multiplier=10, total_epoch=9
+):
     """A function wrapper for building a learning rate scheduler.
 
     Args:

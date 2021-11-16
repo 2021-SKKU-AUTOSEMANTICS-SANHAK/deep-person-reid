@@ -5,7 +5,7 @@ model:
 data:
   type: 'image'
   sources: ['skku']
-  targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
+  targets: ['skku']
   height: 256
   width: 128
   combineall: False

@@ -71,6 +71,9 @@ def get_default_config():
     cfg.train.gamma = 0.1 # learning rate decay multiplier
     cfg.train.print_freq = 20 # print frequency
     cfg.train.seed = 1 # random seed
+    cfg.train.multiplier = 10 # warmup multiplier
+    cfg.train.total_epoch = 19 # warmup time
+
 
     # optimizer
     cfg.sgd = CN()
@@ -187,7 +190,9 @@ def lr_scheduler_kwargs(cfg):
         'lr_scheduler': cfg.train.lr_scheduler,
         'stepsize': cfg.train.stepsize,
         'gamma': cfg.train.gamma,
-        'max_epoch': cfg.train.max_epoch
+        'max_epoch': cfg.train.max_epoch,
+        'multiplier': cfg.train.multiplier,
+        'total_epoch': cfg.train.total_epoch
     }
 
 

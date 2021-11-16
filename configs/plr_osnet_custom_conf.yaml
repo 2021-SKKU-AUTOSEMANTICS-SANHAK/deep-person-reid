@@ -5,11 +5,11 @@ model:
 data:
   type: 'image'
   sources: ['skku']
-  targets: ['skku',  'market1501', 'cuhk01', 'cuhk02', 'cuhk03', 'sensereid', 'prid']
+  targets: ['skku']
   height: 256
   width: 128
   combineall: False
-  transforms: ['random_flip', 'random_erase', 'random_sized_crop'] # ['random_flip']
+  transforms: ['random_flip', 'random_erase', 'random_sized_crop']
   save_dir: 'log/plr_osnet_triplet_skku'
 
 loss:
@@ -27,12 +27,12 @@ sampler:
 
 train:
   optim: 'adam'
-  lr: 0.000035
+  lr: 0.000035 # 0.000035
   max_epoch: 200
   batch_size: 192
   lr_scheduler: 'warmup'
-  #multiplier: 10
-  #total_epoch: 19 # torchreid/optim/lr_scheduler.py - parameters of function "build_lr_scheduler"
+  multiplier: 10
+  total_epoch: 34
   stepsize: [40, 70]
 
 test:
@@ -42,4 +42,3 @@ test:
   evaluate: False
   eval_freq: 10
   rerank: True
-

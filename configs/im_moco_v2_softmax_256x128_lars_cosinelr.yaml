@@ -1,0 +1,36 @@
+model:
+  name: 'moco'
+  pretrained: True
+
+data:
+  type: 'image'
+  sources: ['market1501']
+  targets: ['market1501']
+  height: 256
+  width: 128
+  combineall: False
+  transforms: ['random_flip', 'random_erase', 'gaussian_blur', 'random_sized_crop']
+  save_dir: 'log/moco_softmax_skku'
+
+loss:
+  name: 'softmax'
+  softmax:
+    label_smooth: True
+
+sampler:
+  train_sampler: 'DistributedSampler'
+
+train:
+  optim: 'lars'
+  lr: 0.3
+  max_epoch: 1000
+  batch_size: 128
+  lr_scheduler: 'cosine'
+
+test:
+  batch_size: 300
+  dist_metric: 'euclidean'
+  normalize_feature: False
+  evaluate: False
+  eval_freq: 10
+  rerank: True

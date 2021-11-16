@@ -22,7 +22,6 @@ from .resnet_ibn_b import *
 from .shufflenetv2 import *
 from .inceptionresnetv2 import *
 from .plr_osnet import *
-from .efficientnet import *
 from .mocov2 import *
 
 __model_factory = {
@@ -76,11 +75,9 @@ __model_factory = {
     'osnet_ibn_x1_0': osnet_ibn_x1_0,
     'osnet_ain_x1_0': osnet_ain_x1_0,
     'plr_osnet': plr_osnet,
-    'efficientnet': efficientnet,
     # unsupervised models
     'moco': mocov2,
     }
-
 
 def show_avai_models():
     """Displays available models.

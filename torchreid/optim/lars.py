@@ -3,10 +3,6 @@
 # @Date    : 2021-01-21 23:27:53
 # @Author  : Dengpan Fu (t-defu@microsoft.com)
 
-"""
-It should be worked
-"""
-
 import os
 import numpy as np
 
@@ -117,5 +113,5 @@ def get_lars_optimizer(model, lr, momentum=0.9, weight_decay=1e-4,
                         'layer_adaptation': True}]
     optimizer = torch.optim.SGD(param_groups, lr=lr, momentum=momentum)
     optimizer = LARS(optimizer)
-    return optimizer
 
+    return optimizer
