@@ -405,6 +405,7 @@ class Engine(object):
         distmat = distmat.numpy()
 
         print("Mean distance: ", np.mean(distmat))
+        print("Standard Deviation: ", np.std(distmat))
 
         if rerank:
             print('Applying person re-ranking ...')
