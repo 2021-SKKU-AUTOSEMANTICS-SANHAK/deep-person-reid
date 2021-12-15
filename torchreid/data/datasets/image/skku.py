@@ -4,8 +4,17 @@ import os.path as osp
 
 from ..dataset import ImageDataset
 
+dataset_candidate = {
+    0: 'SKKU',  # combine all of 1~5 
+    1: 'skku_1_5/SKKU', 
+    2: 'skku_2_5/SKKU',
+    3: 'skku_3_5/SKKU',
+    4: 'skku_4_5/SKKU',
+    5: 'skku_5_5/SKKU'
+}
+
 class SKKU(ImageDataset):
-    dataset_dir = 'SKKU'
+    dataset_dir = dataset_candidate[0]
 
     def __init__(self, root='', **kwargs):
         self.root = osp.abspath(osp.expanduser(root))
@@ -31,9 +40,3 @@ class SKKU(ImageDataset):
             data.append((img_path, pid, camid))
 
         return data
-
-"""
-위를 Jupyter를 통해 실행 후, 
-torchreid.data.register_image_dataset('skku', SKKU)
-를 따로 실행할 것. 이를 실행하지 않으면 Dataset을 인식하지 못함.
-"""

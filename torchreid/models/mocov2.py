@@ -232,7 +232,6 @@ def concat_all_gather(tensor):
 
 def init_pretrained_weights(model, key=''):
     """Initializes model with pretrained weights.
-    
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
     import errno
@@ -300,7 +299,9 @@ def mocov2(num_classes=1000, pretrained=True, loss='softmax', **kwargs):
     # use resnet50 as encoder of moco
     base_encoder = backbone
 
+    # this is done on sampler 'DistributedSampler' & 'InferenceSampler'
     #DDPsetup()
+    
     
     model = MoCo(
         base_encoder=base_encoder,

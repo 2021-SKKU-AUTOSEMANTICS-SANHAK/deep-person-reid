@@ -22,7 +22,9 @@ from .resnet_ibn_b import *
 from .shufflenetv2 import *
 from .inceptionresnetv2 import *
 from .plr_osnet import *
+from .mgn import *
 from .mocov2 import *
+from .lup_resnet import *
 
 __model_factory = {
     # image classification models
@@ -75,8 +77,11 @@ __model_factory = {
     'osnet_ibn_x1_0': osnet_ibn_x1_0,
     'osnet_ain_x1_0': osnet_ain_x1_0,
     'plr_osnet': plr_osnet,
+    'mgn': mgn,
     # unsupervised models
     'moco': mocov2,
+    # Moco pretrained
+    'lup_r50': lup_r50
     }
 
 def show_avai_models():

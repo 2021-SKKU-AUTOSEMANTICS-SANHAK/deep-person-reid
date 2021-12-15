@@ -1,5 +1,5 @@
 model:
-  name: 'resnet50'
+  name: 'lup_r50'
   pretrained: True
 
 data:

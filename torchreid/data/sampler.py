@@ -284,5 +284,5 @@ def build_train_sampler(
     elif train_sampler == 'InferenceSampler':
         DDPsetup()
         sampler = InferenceSampler(dataset=data_source)
-    #(self, data_num: int, num_replicas: int = None, rank: int = None)
+    
     return sampler
